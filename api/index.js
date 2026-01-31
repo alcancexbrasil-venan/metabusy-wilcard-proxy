@@ -11,10 +11,17 @@ export default async function handler(req, res) {
     ? incomingHost.replace(".metabusy.com.br", "")
     : "";
 
-  const url = new URL("https://rhniytwnpmdytftyoyiq.supabase.co/functions/v1/site-render");
+  // URL base do Supabase
+  const url = new URL("https://rhniytwnpmdytfyoyiq.supabase.co/functions/v1/site-render");
 
+  // repassa subdomínio
   if (subdomain) {
     url.searchParams.set("subdomain", subdomain);
+  }
+
+  // REPASSA QUERY PARAMS (?page=privacy etc)
+  for (const [key, value] of Object.entries(req.query || {})) {
+    url.searchParams.set(key, value);
   }
 
   try {
@@ -31,6 +38,7 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.status(response.status).send(html);
   } catch (error) {
+    console.error(error);
     res.status(500).send("Proxy error");
   }
 }
