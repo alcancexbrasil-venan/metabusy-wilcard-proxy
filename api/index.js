@@ -23,15 +23,6 @@ export default async function handler(req, res) {
         "x-original-host": incomingHost,
       },
     });
-// ✅ Preservar query params da URL original (ex: ?page=privacy / ?page=terms)
-const queryString = (req.url || "").split("?")[1];
-if (queryString) {
-  const params = new URLSearchParams(queryString);
-  for (const [key, value] of params.entries()) {
-    // não sobrescrever o subdomain que já definimos
-    if (key !== "subdomain") url.searchParams.set(key, value);
-  }
-}
 
     const html = await response.text();
     res.setHeader("Content-Type", "text/html; charset=utf-8");
