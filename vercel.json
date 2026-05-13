@@ -1,0 +1,28 @@
+{
+  "rewrites": [
+    {
+      "source": "/assets/:path*",
+      "destination": "https://metabusy.lovable.app/assets/:path*"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "https://metabusy.lovable.app/favicon.ico"
+    },
+    {
+      "source": "/manifest.json",
+      "destination": "https://metabusy.lovable.app/manifest.json"
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "destination": "https://metabusy.lovable.app/manifest.webmanifest"
+    },
+    {
+      "source": "/icons/:path*",
+      "destination": "https://metabusy.lovable.app/icons/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ]
+}
