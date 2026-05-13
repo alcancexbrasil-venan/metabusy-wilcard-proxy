@@ -1,5 +1,3 @@
-const STATIC_ASSET_PATTERN = /^(\/assets\/|\/icons\/|\/favicon\.ico$|\/manifest(?:\.json|\.webmanifest)?$|.*\.(?:js|mjs|css|svg|woff|woff2|png|jpg|jpeg|webp|json|map|wasm|ico)$)/i;
-
 export default async function handler(req, res) {
   const incomingHostRaw =
     req.headers["x-forwarded-host"] ||
@@ -7,98 +5,79 @@ export default async function handler(req, res) {
     req.headers["host"] ||
     "";
 
-  const incomingHost = String(incomingHostRaw).split(",")[0].toLowerCase();
-
-  const requestUrl = new URL(
-    req.url || "/",
-    `https://${incomingHost || "metabusy.com.br"}`
-  );
-
-  const pathname = requestUrl.pathname;
+  const incomingHost = String(incomingHostRaw)
+    .split(",")[0]
+    .toLowerCase();
 
   const subdomain = incomingHost.endsWith(".metabusy.com.br")
     ? incomingHost.split(".")[0]
     : "";
 
-  const target = new URL(
-    "https://rhniytwnpmdytftyoyiq.supabase.co/functions/v1/site-render"
-  );
-
-  if (subdomain) {
-    target.searchParams.set("subdomain", subdomain);
-  }
-
-  target.searchParams.set("path", pathname);
-
-  requestUrl.searchParams.forEach((value, key) => {
-    if (key !== "subdomain" && key !== "path") {
-      target.searchParams.append(key, value);
-    }
-  });
+  const pathname = req.url || "/";
 
   try {
-    const response = await fetch(target.toString(), {
-      method: req.method,
+    // assets
+    if (
+      pathname.startsWith("/assets/") ||
+      pathname.endsWith(".js") ||
+      pathname.endsWith(".css") ||
+      pathname.endsWith(".svg") ||
+      pathname.endsWith(".png") ||
+      pathname.endsWith(".jpg") ||
+      pathname.endsWith(".jpeg") ||
+      pathname.endsWith(".woff2") ||
+      pathname.endsWith(".ico") ||
+      pathname.endsWith(".json") ||
+      pathname.endsWith(".webmanifest")
+    ) {
+      const assetUrl = https://metabusy.lovable.app${pathname};
+
+      const assetResponse = await fetch(assetUrl);
+
+      const contentType =
+        assetResponse.headers.get("content-type") ||
+        "application/octet-stream";
+
+      const body = await assetResponse.arrayBuffer();
+
+      res.setHeader("Content-Type", contentType);
+
+      res.setHeader(
+        "Cache-Control",
+        "public, max-age=31536000, immutable"
+      );
+
+      return res
+        .status(assetResponse.status)
+        .send(Buffer.from(body));
+    }
+
+    // html
+    const url = new URL(
+      "https://rhnijvtwnpmdyftfyoyiq.supabase.co/functions/v1/site-render"
+    );
+
+    if (subdomain) {
+      url.searchParams.set("subdomain", subdomain);
+    }
+
+    const response = await fetch(url.toString(), {
       headers: {
-        accept:
-          req.headers["accept"] ||
-          (STATIC_ASSET_PATTERN.test(pathname)
-            ? "*/*"
-            : "text/html"),
-
-        "accept-language":
-          req.headers["accept-language"] || "",
-
-        "user-agent":
-          req.headers["user-agent"] || "",
-
         "x-forwarded-host": incomingHost,
         "x-original-host": incomingHost,
       },
-
-      redirect: "follow",
     });
 
-    const blockedHeaders = new Set([
-      "connection",
-      "content-encoding",
-      "content-length",
-      "transfer-encoding",
-      "set-cookie",
-    ]);
+    const html = await response.text();
 
-    response.headers.forEach((value, key) => {
-      if (!blockedHeaders.has(key.toLowerCase())) {
-        res.setHeader(key, value);
-      }
-    });
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
 
-    res.setHeader(
-      "Content-Type",
-      response.headers.get("content-type") ||
-        "application/octet-stream"
-    );
+    res.setHeader("Cache-Control", "no-cache");
 
-    if (STATIC_ASSET_PATTERN.test(pathname)) {
-      res.setHeader("X-Asset-Bypass", "vercel-proxy");
-    }
-
-    const body = Buffer.from(
-      await response.arrayBuffer()
-    );
-
-    res.status(response.status).send(body);
-
+    return res.status(response.status).send(html);
   } catch (error) {
+    console.error(error);
 
-    console.error("Proxy error", error);
-
-    res
-      .status(500)
-      .setHeader(
-        "Content-Type",
-        "text/plain; charset=utf-8"
-      )
-      .send("Proxy error");
+    return res.status(500).send("Proxy error");
   }
 }
