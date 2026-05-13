@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       pathname.endsWith(".json") ||
       pathname.endsWith(".webmanifest")
     ) {
-      const assetUrl = https://metabusy.lovable.app${pathname};
+      const assetUrl = `https://metabusy.lovable.app${pathname}`;
 
       const assetResponse = await fetch(assetUrl);
 
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         assetResponse.headers.get("content-type") ||
         "application/octet-stream";
 
-      const body = await assetResponse.arrayBuffer();
+      const body = await assetResponse.text();
 
       res.setHeader("Content-Type", contentType);
 
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
       return res
         .status(assetResponse.status)
-        .send(Buffer.from(body));
+        .send(body);
     }
 
     // html
