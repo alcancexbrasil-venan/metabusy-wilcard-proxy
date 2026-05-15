@@ -21,8 +21,8 @@
       "destination": "https://metabusy.lovable.app/icons/:path*"
     },
     {
-      "source": "/(.*)",
-      "destination": "/api"
+      "source": "/:path*",
+      "destination": "/api?__path=:path*"
     }
   ]
 }
